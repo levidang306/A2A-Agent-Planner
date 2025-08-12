@@ -5,7 +5,7 @@ import logging
 from typing import Dict, Any, List, Optional
 from .interfaces import IProjectManagementService
 from ..a2a.types import TaskData
-from ..config.settings import TrelloConfig, GitHubConfig
+from ..config.settings import TrelloConfig
 
 logger = logging.getLogger(__name__)
 
@@ -97,66 +97,6 @@ class TrelloProjectService(IProjectManagementService):
     
     def is_enabled(self) -> bool:
         """Check if Trello service is enabled"""
-        return self._enabled and self.client is not None
-
-
-class GitHubProjectService(IProjectManagementService):
-    """GitHub implementation of project management service"""
-    
-    def __init__(self, config: GitHubConfig, github_client=None):
-        self.config = config
-        self.client = github_client
-        self._enabled = config.enabled and bool(config.token)
-    
-    async def create_project(self, project_name: str, description: str) -> Optional[Dict[str, Any]]:
-        """Create a new GitHub repository or project"""
-        if not self.is_enabled():
-            return None
-        
-        try:
-            # Implementation would create GitHub repository or project
-            return {
-                "id": "github_project_id",
-                "name": project_name,
-                "url": f"https://github.com/user/{project_name}",
-                "type": "github_project"
-            }
-        except Exception as e:
-            logger.error(f"Failed to create GitHub project: {e}")
-        
-        return None
-    
-    async def create_task(self, project_id: str, task: TaskData) -> Optional[Dict[str, Any]]:
-        """Create a GitHub issue for the task"""
-        if not self.is_enabled():
-            return None
-        
-        try:
-            # Implementation would create GitHub issue
-            return {
-                "id": "github_issue_id",
-                "title": task.title,
-                "number": 1,
-                "type": "github_issue"
-            }
-        except Exception as e:
-            logger.error(f"Failed to create GitHub issue: {e}")
-        
-        return None
-    
-    async def update_task(self, task_id: str, updates: Dict[str, Any]) -> bool:
-        """Update a GitHub issue"""
-        return False
-    
-    async def get_project_tasks(self, project_id: str) -> List[Dict[str, Any]]:
-        """Get all issues from GitHub repository"""
-        if not self.is_enabled():
-            return []
-        
-        return []
-    
-    def is_enabled(self) -> bool:
-        """Check if GitHub service is enabled"""
         return self._enabled and self.client is not None
 
 

@@ -28,20 +28,23 @@ app = FastAPI(title="A2A Testing UI", description="Web interface for testing A2A
 # Demo scenarios
 DEMO_SCENARIOS = {
     "simple_website": {
-        "title": "🌐 Simple Website",
+        "title": "Simple Company Website",
         "description": "Basic company website with contact form",
-        "mission": """Create a simple company website with:
+        "mission": """Create a simple company website project within 4 weeks with:
 - Homepage with company info
 - About us page
 - Services page  
 - Contact form
 - Responsive design
-- SEO optimization"""
+- SEO optimization
+
+Project timeline: 4 weeks
+Expected launch: End of month"""
     },
     "ecommerce_platform": {
-        "title": "🛒 E-commerce Platform", 
+        "title": "E-commerce Platform", 
         "description": "Full-featured online store",
-        "mission": """Create a comprehensive e-commerce platform with:
+        "mission": """Create a comprehensive e-commerce platform project within 12 weeks with:
 - User registration and authentication
 - Product catalog with search and filters
 - Shopping cart and checkout process
@@ -51,12 +54,16 @@ DEMO_SCENARIOS = {
 - Customer reviews and ratings
 - Email notifications
 - Mobile-responsive design
-- Handle 1,000 concurrent users"""
+- Handle 1,000 concurrent users
+
+Project timeline: 12 weeks
+Expected beta release: Week 8
+Expected full launch: Week 12"""
     },
     "mobile_app": {
-        "title": "📱 Mobile App",
+        "title": "Food Delivery Mobile App",
         "description": "Cross-platform mobile application",
-        "mission": """Develop a mobile application for food delivery with:
+        "mission": """Develop a food delivery mobile app project within 16 weeks with:
 - User registration and profile management
 - Restaurant listings with menus
 - Real-time order tracking
@@ -66,12 +73,17 @@ DEMO_SCENARIOS = {
 - Rating and review system
 - Admin dashboard for restaurants
 - iOS and Android support
-- Offline functionality for basic features"""
+- Offline functionality for basic features
+
+Project timeline: 16 weeks
+Expected MVP: Week 10
+Expected beta testing: Week 12
+Expected app store launch: Week 16"""
     },
     "enterprise_system": {
-        "title": "🏢 Enterprise System",
+        "title": "Enterprise ERP System",
         "description": "Complex business management system",
-        "mission": """Build an enterprise resource planning (ERP) system with:
+        "mission": """Build an enterprise resource planning ERP system project within 24 weeks with:
 - Multi-tenant architecture
 - User management with role-based access
 - Financial management modules
@@ -83,12 +95,17 @@ DEMO_SCENARIOS = {
 - Scalable to 10,000+ users
 - Compliance with industry standards (SOX, GDPR)
 - Real-time data synchronization
-- Audit trails and logging"""
+- Audit trails and logging
+
+Project timeline: 24 weeks (6 months)
+Expected alpha release: Week 12
+Expected beta release: Week 18
+Expected production release: Week 24"""
     },
     "ai_platform": {
-        "title": "🤖 AI Platform",
+        "title": "AI Machine Learning Platform",
         "description": "Machine learning and AI services platform",
-        "mission": """Create an AI-powered platform that provides:
+        "mission": """Create an AI-powered machine learning platform project within 20 weeks with:
 - Machine learning model training interface
 - Data preprocessing and visualization tools
 - Model deployment and inference APIs
@@ -99,12 +116,17 @@ DEMO_SCENARIOS = {
 - Data privacy and security compliance
 - Multi-language SDK support
 - Performance optimization tools
-- Cost management and billing system"""
+- Cost management and billing system
+
+Project timeline: 20 weeks
+Expected core platform: Week 12
+Expected beta release: Week 16
+Expected production launch: Week 20"""
     },
     "blockchain_dapp": {
-        "title": "⛓️ Blockchain DApp",
+        "title": "DeFi Blockchain Application",
         "description": "Decentralized application on blockchain",
-        "mission": """Develop a decentralized finance (DeFi) application with:
+        "mission": """Develop a decentralized finance DeFi blockchain application project within 18 weeks with:
 - Smart contracts for lending and borrowing
 - Wallet integration (MetaMask, WalletConnect)
 - Liquidity pool management
@@ -115,12 +137,17 @@ DEMO_SCENARIOS = {
 - Real-time price feeds integration
 - Mobile wallet compatibility
 - Gas optimization strategies
-- Decentralized identity verification"""
+- Decentralized identity verification
+
+Project timeline: 18 weeks
+Expected testnet deployment: Week 8
+Expected security audit: Week 12
+Expected mainnet launch: Week 18"""
     },
     "iot_system": {
-        "title": "🌐 IoT System",
+        "title": "Smart IoT Monitoring System",
         "description": "Internet of Things monitoring platform",
-        "mission": """Build an IoT monitoring and control system with:
+        "mission": """Build a smart IoT monitoring and control system project within 14 weeks with:
 - Device registration and management
 - Real-time sensor data collection
 - Data visualization dashboards
@@ -131,10 +158,15 @@ DEMO_SCENARIOS = {
 - Machine learning for predictive maintenance
 - API for third-party device integration
 - Security protocols for device communication
-- Scalable architecture for millions of devices"""
+- Scalable architecture for millions of devices
+
+Project timeline: 14 weeks
+Expected device integration: Week 6
+Expected dashboard release: Week 10
+Expected production deployment: Week 14"""
     },
     "custom": {
-        "title": "✏️ Custom Project",
+        "title": "Custom Project",
         "description": "Enter your own project requirements",
         "mission": ""
     }
@@ -650,10 +682,28 @@ def generate_demo_cards():
     cards_html = ""
     for key, scenario in DEMO_SCENARIOS.items():
         if key != "custom":  # Skip custom as it's handled separately
-            preview = scenario["mission"][:150] + "..." if len(scenario["mission"]) > 150 else scenario["mission"]
+            preview = scenario["mission"][:200] + "..." if len(scenario["mission"]) > 200 else scenario["mission"]
+            # Add appropriate icon based on project type
+            if "website" in key:
+                icon = "🌐"
+            elif "ecommerce" in key:
+                icon = "🛒"
+            elif "mobile" in key:
+                icon = "📱"
+            elif "enterprise" in key:
+                icon = "🏢"
+            elif "ai" in key:
+                icon = "🤖"
+            elif "blockchain" in key:
+                icon = "⛓️"
+            elif "iot" in key:
+                icon = "🌐"
+            else:
+                icon = "📋"
+                
             cards_html += f"""
             <div class="demo-card" onclick="runDemo('{key}')">
-                <h3>{scenario["title"]}</h3>
+                <h3>{icon} {scenario["title"]}</h3>
                 <p>{scenario["description"]}</p>
                 <div class="mission-preview">{preview}</div>
                 <button class="btn">🚀 Run Demo</button>
@@ -877,10 +927,22 @@ async def execute_a2a_flow(mission: str) -> str:
                 # This will trigger the full A2A flow internally
                 response = await supervisor_client.send_message(request)
                 
+                # Check if response contains Trello information
+                response_text = response.response.parts[0].root.text
+                if "[TRELLO]" in response_text:
+                    if "Board Created:" in response_text:
+                        log_step("🔗 TRELLO", "Trello board and cards created successfully")
+                    elif "Integration Failed:" in response_text:
+                        log_step("❌ TRELLO", "Trello integration failed - check credentials")
+                    elif "Not configured" in response_text:
+                        log_step("⚠️ TRELLO", "Trello integration not configured")
+                else:
+                    log_step("⚠️ TRELLO", "No Trello integration information found")
+                
                 log_step("📊 INTERNAL", "Supervisor → Milestone Agent (Port 9002) for timeline planning")
-                log_step("📊 INTERNAL", "Supervisor → Task Agent (Port 9003) for task breakdown")  
+                log_step("📊 INTERNAL", "Supervisor → Task Agent (Port 9003) for task breakdown + Trello integration")  
                 log_step("📊 INTERNAL", "Supervisor → Resource Agent (Port 9004) for team allocation")
-                log_step("🔄 COMPILE", "Supervisor compiling complete project plan")
+                log_step("🔄 COMPILE", "Supervisor compiling complete project plan with Trello results")
                 log_step("✅ COMPLETE", "A2A Protocol flow finished successfully")
                 
             except httpx.TimeoutException:

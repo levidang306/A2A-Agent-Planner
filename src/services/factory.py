@@ -27,12 +27,6 @@ class ServiceFactory:
             if trello_service:
                 services.append(trello_service)
         
-        # Create GitHub service if enabled
-        if self.config.github.enabled:
-            github_service = self._create_github_service()
-            if github_service:
-                services.append(github_service)
-        
         # Always include local service as fallback
         local_service = self._create_local_service()
         services.append(local_service)
@@ -60,25 +54,6 @@ class ServiceFactory:
                 return None
         
         return self._services_cache.get('trello_service')
-    
-    def _create_github_service(self) -> GitHubProjectService:
-        """Create GitHub service instance"""
-        if 'github_service' not in self._services_cache:
-            try:
-                # Import here to avoid circular dependencies
-                from ..tools.github_integration import GitHubIntegration
-                
-                github_client = GitHubIntegration(token=self.config.github.token)
-                
-                self._services_cache['github_service'] = GitHubProjectService(
-                    config=self.config.github,
-                    github_client=github_client
-                )
-            except Exception as e:
-                logger.error(f"Failed to create GitHub service: {e}")
-                return None
-        
-        return self._services_cache.get('github_service')
     
     def _create_local_service(self) -> LocalProjectService:
         """Create local project service instance"""

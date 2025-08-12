@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Project Gantt Chart</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .gantt-container { overflow-x: auto; }
+        table { border-collapse: collapse; width: 100%; min-width: 800px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .milestone { background-color: #ffeb3b; }
+        .task { background-color: #e3f2fd; }
+        .high-priority { border-left: 4px solid #f44336; }
+        .medium-priority { border-left: 4px solid #ff9800; }
+        .low-priority { border-left: 4px solid #4caf50; }
+        .gantt-bar { height: 20px; margin: 2px 0; border-radius: 3px; }
+        .gantt-bar-milestone { background: linear-gradient(90deg, #ffeb3b, #ffc107); }
+        .gantt-bar-task { background: linear-gradient(90deg, #2196f3, #03a9f4); }
+    </style>
+</head>
+<body>
+    <h1>📊 Project Gantt Chart</h1>
+    <p><strong>Generated:</strong> 2025-08-12 15:07:45</p>
+    
+    <div class="gantt-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Item</th>
+                    <th>Time Estimate</th>
+                    <th>Priority</th>
+                    <th>Assigned To</th>
+                    <th>Visual Timeline</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                <tr class="milestone">
+                    <td>🎯 Milestone</td>
+                    <td>Planning & Design</td>
+                    <td>2 weeks</td>
+                    <td>High</td>
+                    <td>Team Lead</td>
+                    <td><div class="gantt-bar gantt-bar-milestone" style="width: 200px;"></div></td>
+                </tr>
+
+                <tr class="milestone">
+                    <td>🎯 Milestone</td>
+                    <td>Core Feature Development (MVP)</td>
+                    <td>2 weeks</td>
+                    <td>High</td>
+                    <td>Team Lead</td>
+                    <td><div class="gantt-bar gantt-bar-milestone" style="width: 200px;"></div></td>
+                </tr>
+
+                <tr class="milestone">
+                    <td>🎯 Milestone</td>
+                    <td>Advanced Feature Development & MVP Refinement</td>
+                    <td>2 weeks</td>
+                    <td>High</td>
+                    <td>Team Lead</td>
+                    <td><div class="gantt-bar gantt-bar-milestone" style="width: 200px;"></div></td>
+                </tr>
+
+                <tr class="milestone">
+                    <td>🎯 Milestone</td>
+                    <td>Beta Testing & Bug Fixing</td>
+                    <td>2 weeks</td>
+                    <td>High</td>
+                    <td>Team Lead</td>
+                    <td><div class="gantt-bar gantt-bar-milestone" style="width: 200px;"></div></td>
+                </tr>
+
+                <tr class="milestone">
+                    <td>🎯 Milestone</td>
+                    <td>Deployment & App Store Submission</td>
+                    <td>2 weeks</td>
+                    <td>High</td>
+                    <td>Team Lead</td>
+                    <td><div class="gantt-bar gantt-bar-milestone" style="width: 200px;"></div></td>
+                </tr>
+
+                <tr class="task high-priority">
+                    <td>📝 Task</td>
+                    <td>Requirements Gathering</td>
+                    <td>16 hours</td>
+                    <td>High</td>
+                    <td>TBD</td>
+                    <td><div class="gantt-bar gantt-bar-task" style="width: 80px;"></div></td>
+                </tr>
+
+                <tr class="task medium-priority">
+                    <td>📝 Task</td>
+                    <td>Market Research</td>
+                    <td>12 hours</td>
+                    <td>Medium</td>
+                    <td>TBD</td>
+                    <td><div class="gantt-bar gantt-bar-task" style="width: 60px;"></div></td>
+                </tr>
+
+                <tr class="task high-priority">
+                    <td>📝 Task</td>
+                    <td>Technical Feasibility Study</td>
+                    <td>8 hours</td>
+                    <td>High</td>
+                    <td>TBD</td>
+                    <td><div class="gantt-bar gantt-bar-task" style="width: 40px;"></div></td>
+                </tr>
+
+                <tr class="task high-priority">
+                    <td>📝 Task</td>
+                    <td>System Architecture Design</td>
+                    <td>24 hours</td>
+                    <td>High</td>
+                    <td>TBD</td>
+                    <td><div class="gantt-bar gantt-bar-task" style="width: 120px;"></div></td>
+                </tr>
+
+                <tr class="task high-priority">
+                    <td>📝 Task</td>
+                    <td>Database Design</td>
+                    <td>16 hours</td>
+                    <td>High</td>
+                    <td>TBD</td>
+                    <td><div class="gantt-bar gantt-bar-task" style="width: 80px;"></div></td>
+                </tr>
+
+                <tr class="task medium-priority">
+                    <td>📝 Task</td>
+                    <td>UI/UX Design</td>
+                    <td>20 hours</td>
+                    <td>Medium</td>
+                    <td>TBD</td>
+                    <td><div class="gantt-bar gantt-bar-task" style="width: 100px;"></div></td>
+                </tr>
+
+                <tr class="task high-priority">
+                    <td>📝 Task</td>
+                    <td>Backend API Development</td>
+                    <td>40 hours</td>
+                    <td>High</td>
+                    <td>TBD</td>
+                    <td><div class="gantt-bar gantt-bar-task" style="width: 200px;"></div></td>
+                </tr>
+
+                <tr class="task high-priority">
+                    <td>📝 Task</td>
+                    <td>Frontend Development</td>
+                    <td>32 hours</td>
+                    <td>High</td>
+                    <td>TBD</td>
+                    <td><div class="gantt-bar gantt-bar-task" style="width: 160px;"></div></td>
+                </tr>
+
+                <tr class="task medium-priority">
+                    <td>📝 Task</td>
+                    <td>Database Implementation</td>
+                    <td>16 hours</td>
+                    <td>Medium</td>
+                    <td>TBD</td>
+                    <td><div class="gantt-bar gantt-bar-task" style="width: 80px;"></div></td>
+                </tr>
+
+                <tr class="task high-priority">
+                    <td>📝 Task</td>
+                    <td>Unit Testing</td>
+                    <td>24 hours</td>
+                    <td>High</td>
+                    <td>TBD</td>
+                    <td><div class="gantt-bar gantt-bar-task" style="width: 120px;"></div></td>
+                </tr>
+
+                <tr class="task high-priority">
+                    <td>📝 Task</td>
+                    <td>Integration Testing</td>
+                    <td>16 hours</td>
+                    <td>High</td>
+                    <td>TBD</td>
+                    <td><div class="gantt-bar gantt-bar-task" style="width: 80px;"></div></td>
+                </tr>
+
+                <tr class="task medium-priority">
+                    <td>📝 Task</td>
+                    <td>User Acceptance Testing</td>
+                    <td>12 hours</td>
+                    <td>Medium</td>
+                    <td>TBD</td>
+                    <td><div class="gantt-bar gantt-bar-task" style="width: 60px;"></div></td>
+                </tr>
+
+                <tr class="task high-priority">
+                    <td>📝 Task</td>
+                    <td>Production Environment Setup</td>
+                    <td>16 hours</td>
+                    <td>High</td>
+                    <td>TBD</td>
+                    <td><div class="gantt-bar gantt-bar-task" style="width: 80px;"></div></td>
+                </tr>
+
+                <tr class="task urgent-priority">
+                    <td>📝 Task</td>
+                    <td>Deployment & Go-Live</td>
+                    <td>8 hours</td>
+                    <td>Urgent</td>
+                    <td>TBD</td>
+                    <td><div class="gantt-bar gantt-bar-task" style="width: 40px;"></div></td>
+                </tr>
+
+                <tr class="task high-priority">
+                    <td>📝 Task</td>
+                    <td>Post-Launch Support</td>
+                    <td>16 hours</td>
+                    <td>High</td>
+                    <td>TBD</td>
+                    <td><div class="gantt-bar gantt-bar-task" style="width: 80px;"></div></td>
+                </tr>
+
+            </tbody>
+        </table>
+    </div>
+    
+    <h2>📋 Legend</h2>
+    <ul>
+        <li>🎯 <span style="background-color: #ffeb3b; padding: 2px 8px;">Milestones</span> - Major project phases</li>
+        <li>📝 <span style="background-color: #e3f2fd; padding: 2px 8px;">Tasks</span> - Individual work items</li>
+        <li><span style="border-left: 4px solid #f44336; padding-left: 8px;">High Priority</span></li>
+        <li><span style="border-left: 4px solid #ff9800; padding-left: 8px;">Medium Priority</span></li>
+        <li><span style="border-left: 4px solid #4caf50; padding-left: 8px;">Low Priority</span></li>
+    </ul>
+    
+    <p><em>This is a simplified Gantt chart. For detailed project scheduling, import the data into specialized project management tools.</em></p>
+</body>
+</html>
