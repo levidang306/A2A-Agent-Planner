@@ -1,0 +1,33 @@
+{
+  "generated_at": "2025-08-11T15:33:26.190452",
+  "team_size": 2,
+  "members": [
+    {
+      "name": "John Doe",
+      "role": "Full-Stack Developer",
+      "skills": {
+        "python": 8,
+        "react": 7
+      }
+    },
+    {
+      "name": "Jane Smith",
+      "role": "UI/UX Designer",
+      "skills": {
+        "design": 9,
+        "figma": 8
+      }
+    }
+  ],
+  "skills_summary": {
+    "python": 1,
+    "react": 1,
+    "design": 1,
+    "figma": 1
+  },
+  "contact_template": {
+    "note": "Add real contact information for team coordination",
+    "slack_channel": "#project-team",
+    "meeting_schedule": "Weekly standup - TBD"
+  }
+}

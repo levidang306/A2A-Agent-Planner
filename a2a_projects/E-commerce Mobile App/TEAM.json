@@ -1,0 +1,82 @@
+{
+  "generated_at": "2025-08-11T15:33:26.182400",
+  "team_size": 4,
+  "members": [
+    {
+      "name": "Sarah Chen",
+      "role": "Full-Stack Lead Developer",
+      "skills": {
+        "backend": 9,
+        "frontend": 8,
+        "react": 9,
+        "python": 9,
+        "database": 8,
+        "api-design": 9,
+        "security": 7
+      },
+      "availability": "40 hours/week"
+    },
+    {
+      "name": "Mike Rodriguez",
+      "role": "Frontend Developer",
+      "skills": {
+        "frontend": 9,
+        "react": 9,
+        "javascript": 9,
+        "css": 8,
+        "mobile-design": 8,
+        "state-management": 7
+      },
+      "availability": "40 hours/week"
+    },
+    {
+      "name": "Alex Kim",
+      "role": "Backend Developer",
+      "skills": {
+        "backend": 9,
+        "python": 8,
+        "database": 9,
+        "api-design": 8,
+        "security": 8,
+        "payments": 7
+      },
+      "availability": "35 hours/week"
+    },
+    {
+      "name": "Jennifer Liu",
+      "role": "QA Engineer",
+      "skills": {
+        "testing": 9,
+        "automation": 8,
+        "performance": 7,
+        "mobile-testing": 8,
+        "backend": 6,
+        "frontend": 6
+      },
+      "availability": "40 hours/week"
+    }
+  ],
+  "skills_summary": {
+    "backend": 3,
+    "frontend": 3,
+    "react": 2,
+    "python": 2,
+    "database": 2,
+    "api-design": 2,
+    "security": 2,
+    "javascript": 1,
+    "css": 1,
+    "mobile-design": 1,
+    "state-management": 1,
+    "payments": 1,
+    "testing": 1,
+    "automation": 1,
+    "performance": 1,
+    "mobile-testing": 1
+  },
+  "contact_template": {
+    "note": "Add real contact information for team coordination",
+    "slack_channel": "#project-team",
+    "meeting_schedule": "Weekly standup - TBD"
+  }
+}
