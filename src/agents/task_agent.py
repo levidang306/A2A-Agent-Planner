@@ -22,14 +22,18 @@ class TaskAgent(BaseAgent):
         # Initialize Trello integration
         self.trello_api_key = os.getenv('API_KEY_TRELLO')
         self.trello_api_token = os.getenv('API_TOKEN_TRELLO')
+        print(f"[INIT] Trello API Key: {'Configured' if self.trello_api_key else 'Missing'}")
+        print(f"[INIT] Trello API Token: {'Configured' if self.trello_api_token else 'Missing'}")
         self.trello_enabled = bool(self.trello_api_key and self.trello_api_token)
         
         if self.trello_enabled:
             self.trello = TrelloIntegration(self.trello_api_key, self.trello_api_token)
             logger.info("Task Agent initialized with Trello integration")
+            print("[INIT] ✅ Trello integration enabled")
         else:
             self.trello = None
             logger.warning("Task Agent initialized without Trello integration (missing credentials)")
+            print("[INIT] ❌ Trello integration disabled - missing credentials")
         
         # Store current project board ID for task creation
         self.current_board_id = None
@@ -69,20 +73,35 @@ class TaskAgent(BaseAgent):
     
     async def process_message(self, request: SendMessageRequest) -> MessageResponse:
         """Process task breakdown request and create Trello cards"""
+        print("[TASK] ======= PROCESSING MESSAGE =======")
+        
         message = request.params.message
         content = message.parts[0].root.text
         milestone_data = getattr(request.params, 'milestone_data', None)
+        
+        print(f"[TASK] Content received: {content[:100]}...")
+        print(f"[TASK] Trello enabled: {self.trello_enabled}")
         
         logger.info("Processing task breakdown request")
         
         # Analyze content for task breakdown
         task_breakdown = self.analyze_and_breakdown_tasks(content, milestone_data)
+        print(f"[TASK] Generated {len(task_breakdown)} tasks")
         
         # Create Trello board and cards if enabled
         trello_results = None
-        if self.trello_enabled:
-            trello_results = await self.create_trello_project(content, task_breakdown)
+        print(f"[TASK] Analyzing content for task breakdown: {content[:50]}...")
         
+        if self.trello_enabled:
+            print("[TASK] 🔄 Starting Trello integration...")
+            trello_results = await self.create_trello_project(content, task_breakdown)
+            print(f"[TASK] Trello results: {trello_results}")
+        else:
+            print("[TASK] ❌ Trello integration disabled")
+            
+        print(f"[TASK] Trello content: {content}")
+        print(f"[TASK] Trello task_breakdown: {len(task_breakdown)} tasks")
+        print(f"[TASK] Trello results: {trello_results}")
         # Generate response with Trello integration info
         response_text = self.format_task_response(task_breakdown, trello_results)
         

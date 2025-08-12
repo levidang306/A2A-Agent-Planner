@@ -13,10 +13,27 @@ async def test_a2a_system():
     
     # Test mission
     mission = """
-    Create a comprehensive e-commerce platform that allows users to browse products, 
+    Create a comprehensive e-commerce platform project within 14 weeks that allows users to browse products, 
     add items to cart, process payments, and manage orders. The platform should include 
     an admin panel for inventory management, user management, and analytics dashboard.
     The system needs to be scalable, secure, and mobile-responsive.
+    
+    Project timeline: 14 weeks
+    Expected MVP: Week 8
+    Expected beta release: Week 11
+    Expected production launch: Week 14
+    
+    Key features required:
+    - User authentication and registration
+    - Product catalog with search and filtering
+    - Shopping cart and checkout system
+    - Payment gateway integration (Stripe, PayPal)
+    - Order management and tracking
+    - Admin dashboard with analytics
+    - Mobile-responsive design
+    - Inventory management system
+    - User profile management
+    - Email notification system
     """
     
     async with httpx.AsyncClient() as httpx_client:

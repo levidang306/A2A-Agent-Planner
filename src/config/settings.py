@@ -26,13 +26,6 @@ class TrelloConfig:
 
 
 @dataclass
-class GitHubConfig:
-    """GitHub integration configuration"""
-    token: str = ""
-    enabled: bool = False
-
-
-@dataclass
 class AgentConfig:
     """Individual agent configuration"""
     name: str
@@ -60,7 +53,6 @@ class AppConfig:
     # Service configurations
     database: DatabaseConfig
     trello: TrelloConfig
-    github: GitHubConfig
     ai_service: AIServiceConfig
     
     # Agent configurations
@@ -111,11 +103,6 @@ class ConfigurationManager:
                 api_key=os.getenv("API_KEY_TRELLO", ""),
                 api_secret=os.getenv("API_SECRET_TRELLO", ""),
                 enabled=bool(os.getenv("API_KEY_TRELLO"))
-            ),
-            
-            github=GitHubConfig(
-                token=os.getenv("GITHUB_TOKEN", ""),
-                enabled=bool(os.getenv("GITHUB_TOKEN"))
             ),
             
             ai_service=AIServiceConfig(
