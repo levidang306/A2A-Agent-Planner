@@ -71,6 +71,42 @@ class TaskAgent(BaseAgent):
             }
         )
     
+    def _extract_project_name(self, content: str) -> str:
+        """Extract a clean project name from upstream content.
+        Priority:
+        1) Explicit "[PROJECT] <name>" line in the content
+        2) Heuristic from mission-like phrases (create/build/develop ...)
+        3) Fallback to "A2A Project"
+        """
+        import re
+
+        # 1) Try explicit [PROJECT] marker
+        m = re.search(r"^\[PROJECT\]\s*(.+)$", content, re.IGNORECASE | re.MULTILINE)
+        if m:
+            name = m.group(1).strip()
+            # Guardrails: strip noise and limit length
+            name = re.sub(r"\s+", " ", name)
+            return name[:80]
+
+        # 2) Heuristic extraction from mission phrasing
+        mission_lower = content.lower()
+        patterns = [
+            (r"(?:create|build|develop)\s+(?:a|an)\s+([^.\n\r]+?)(?:\s+with|\s+that|\s+for|\s+project|\.|\n|\r)", True),
+            (r"(?:create|build|develop)\s+([^.\n\r]+?)(?:\s+project|\s+system|\s+platform|\s+app|\s+application)", True),
+        ]
+        for pattern, _ in patterns:
+            match = re.search(pattern, mission_lower, re.IGNORECASE)
+            if match:
+                candidate = match.group(1).strip()
+                # Cleanup and title case
+                candidate = re.sub(r"\s+", " ", candidate)
+                candidate = candidate.title()
+                if 3 <= len(candidate) <= 80:
+                    return candidate
+
+        # 3) Fallback
+        return "A2A Project"
+
     async def process_message(self, request: SendMessageRequest) -> MessageResponse:
         """Process task breakdown request and create Trello cards"""
         print("[TASK] ======= PROCESSING MESSAGE =======")
@@ -293,8 +329,10 @@ class TaskAgent(BaseAgent):
         try:
             logger.info("Creating Trello board for task management")
             
-            # Create project board
-            project_name = f"A2A Project - {project_description[:50]}..."
+            # Create project board with a clean, human-friendly name
+            clean_name = self._extract_project_name(project_description)
+            # Ensure no analysis banners or emojis make it into the board name
+            project_name = f"{clean_name} - Project Tasks"
             board_id = self.trello.create_board(project_name)
             
             if not board_id:
