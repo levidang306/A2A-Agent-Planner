@@ -11,7 +11,6 @@ from src.a2a.client import A2ACardResolver, A2AClient
 async def test_a2a_system():
     """Test the complete A2A task management system"""
     
-    # Test mission
     mission = """
     Create a comprehensive e-commerce platform project within 14 weeks that allows users to browse products, 
     add items to cart, process payments, and manage orders. The platform should include 

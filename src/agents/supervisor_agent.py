@@ -60,16 +60,16 @@ class SupervisorAgent(BaseAgent):
         
         # Try patterns in order
         for pattern, replacement in patterns:
-            if isinstance(replacement, str):
-                if re.search(pattern, mission_lower):
-                    return replacement
-            else:
-                match = re.search(pattern, mission_lower, re.IGNORECASE)
-                if match:
-                    name = match.group(1).strip()
-                    # Clean up and title case
-                    name = re.sub(r'\s+', ' ', name).title()
-                    return name
+            match = re.search(pattern, mission_lower, re.IGNORECASE)
+            if not match:
+                continue
+            # If replacement is a static string and not a backreference, return it
+            if isinstance(replacement, str) and replacement != r'\1':
+                return replacement
+            # Otherwise extract group 1
+            name = match.group(1).strip() if match.groups() else match.group(0).strip()
+            name = re.sub(r'\s+', ' ', name).title()
+            return name
         
         # Fallback: extract first significant words
         words = mission.split()[:4]
@@ -414,132 +414,150 @@ Available Team: {json.dumps(team_members, indent=2)}
                 })
         return normalized
     
-    def compile_enhanced_project_plan(self, mission_analysis: str, milestone_response, 
-                                    task_response, resource_response, project_deliverables: Dict) -> str:
-        """Compile comprehensive project plan with tool integrations"""
-        
-        plan = f"""
-🚀 ENHANCED A2A PROJECT PLAN
-════════════════════════════════════════════════════════════════
+    def _strip_trello_lines(self, text: str) -> str:
+        """Remove lines starting with [TRELLO] to avoid duplication in Task section."""
+        lines = text.splitlines()
+        filtered = [ln for ln in lines if not ln.strip().startswith('[TRELLO]')]
+        return "\n".join(filtered).strip()
 
-{mission_analysis}
+    def _kv_table(self, title: str, rows: List[tuple]) -> str:
+        """Render a simple ASCII table for key-value pairs."""
+        if not rows:
+            return f"{title}\n(no data)"
+        key_w = max(len("Key"), max(len(k) for k, _ in rows))
+        val_w = max(len("Value"), max(len(str(v)) for _, v in rows))
+        sep = "+-" + "-" * key_w + "-+-" + "-" * val_w + "-+"
+        header = f"| {'Key'.ljust(key_w)} | {'Value'.ljust(val_w)} |"
+        lines = [title, sep, header, sep]
+        for k, v in rows:
+            lines.append(f"| {k.ljust(key_w)} | {str(v).ljust(val_w)} |")
+        lines.append(sep)
+        return "\n".join(lines)
 
-📊 PROJECT DELIVERABLES & INTEGRATIONS:
-════════════════════════════════════════════════════════════════
+    def _extract_meta_from_analysis(self, text: str) -> Dict[str, str]:
+        import re
+        meta = {}
+        m = re.search(r'^\[PROJECT\]\s*(.+)$', text, re.MULTILINE)
+        if m:
+            meta['Project'] = m.group(1).strip()
+        m2 = re.search(r'\[MISSION\](.*?)(?:\n\n|\Z)', text, re.DOTALL)
+        if m2:
+            mission_block = m2.group(1).strip().replace('\n', ' ')
+            meta['Mission'] = mission_block[:140] + ('…' if len(mission_block) > 140 else '')
+        # Metadata lines
+        d = re.search(r'Analysis Date:\s*([^\n]+)', text)
+        model = re.search(r'AI Model:\s*([^\n]+)', text)
+        conf = re.search(r'Confidence:\s*([^\n]+)', text)
+        if d:
+            meta['Analysis Date'] = d.group(1).strip()
+        if model:
+            meta['AI Model'] = model.group(1).strip()
+        if conf:
+            meta['Confidence'] = conf.group(1).strip()
+        return meta
 
-🐙 GITHUB PROJECT CREATED:
-"""
-        
-        plan += "\n📁 LOCAL PROJECT FILES CREATED:"
-        
-        # Add Local Project information
-        local_project_info = project_deliverables.get("local_project", {})
-        if local_project_info and not local_project_info.get("error"):
-            project_path = local_project_info.get('project_path', 'Unknown')
-            files_count = len(local_project_info.get('files_created', []))
-            
-            plan += f"""
-[PROJECT PATH] {project_path}
-[FILES CREATED] {files_count} project files
-[INCLUDES] CSV tasks, Gantt chart, team data, timeline JSON
-"""
-            
-            # List the specific files created
-            files_created = local_project_info.get('files_created', [])
-            if files_created:
-                plan += "\n[FILES]\n"
-                for file_path in files_created:
-                    file_name = file_path.split('\\')[-1] if '\\' in file_path else file_path.split('/')[-1]
-                    plan += f"  • {file_name}\n"
-        
-        # Add Timeline information
-        timeline_info = project_deliverables.get("timeline", {})
+    def compile_enhanced_project_plan(self, mission_analysis: str, milestone_response,
+                                      task_response, resource_response, project_deliverables: Dict) -> str:
+        """Compile final plan divided by agent sections + tools summary (no emojis)."""
+
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        # Get raw texts
+        milestone_text = milestone_response.response.parts[0].root.text
+        task_text = task_response.response.parts[0].root.text
+        resource_text = resource_response.response.parts[0].root.text
+
+        # Extract Trello info once
+        trello_info = self.extract_trello_info_from_response(task_text)
+        trello_rows = []
+        if trello_info:
+            trello_rows = [
+                ("Board", trello_info.get('board_name', 'N/A')),
+                ("URL", trello_info.get('board_url', 'N/A')),
+                ("Cards", f"{trello_info.get('cards_created', 0)}/{trello_info.get('total_tasks', 0)}"),
+            ]
+        else:
+            trello_rows = [("Status", "Not configured or failed")]
+
+        # Supervisor summary table
+        meta = self._extract_meta_from_analysis(mission_analysis)
+        sup_rows = [(k, v) for k, v in meta.items()]
+        sup_table = self._kv_table("[AGENT: SUPERVISOR]", sup_rows)
+
+        # Milestone summary table
+        ms_list = getattr(milestone_response, 'milestones', None) or []
+        ms_count = len(ms_list)
+        ms_rows = [("Milestones", ms_count)]
+        # try to gather first and last deadlines
+        def _ms_get(x, key):
+            return getattr(x, key, None) if not isinstance(x, dict) else x.get(key)
+        try:
+            deadlines = [ _ms_get(m, 'deadline') for m in ms_list if _ms_get(m, 'deadline') ]
+            if deadlines:
+                ms_rows.append(("First Deadline", min(deadlines)))
+                ms_rows.append(("Last Deadline", max(deadlines)))
+        except Exception:
+            pass
+        ms_table = self._kv_table("[AGENT: MILESTONE]", ms_rows)
+
+        # Task summary table
+        tasks = getattr(task_response, 'task_breakdown', None) or []
+        total_tasks = len(tasks)
+        total_hours = 0
+        def _task_get(x, key):
+            return getattr(x, key, None) if not isinstance(x, dict) else x.get(key)
+        for t in tasks:
+            h = _task_get(t, 'estimated_hours')
+            try:
+                total_hours += float(h or 0)
+            except Exception:
+                pass
+        task_rows = [("Tasks", total_tasks), ("Estimated Hours", total_hours)] + trello_rows
+        task_table = self._kv_table("[AGENT: TASK]", task_rows)
+
+        # Resource summary table (best-effort parse from text)
+        import re as _re
+        team_sz = _re.search(r'Team Members:\s*(\d+)', resource_text)
+        cost = _re.search(r'Estimated Cost:\s*\$([\d,]+)', resource_text)
+        timeline = _re.search(r'Timeline:\s*([^\n]+)', resource_text)
+        res_rows = [
+            ("Team Members", team_sz.group(1) if team_sz else "N/A"),
+            ("Estimated Cost", f"${cost.group(1)}" if cost else "N/A"),
+            ("Timeline", timeline.group(1).strip() if timeline else "N/A"),
+        ]
+        res_table = self._kv_table("[AGENT: RESOURCE]", res_rows)
+
+        # Tools/Deliverables summary table
+        local_project_info = project_deliverables.get('local_project', {}) or {}
+        timeline_info = project_deliverables.get('timeline', {}) or {}
+        assignments = project_deliverables.get('task_assignments', {}) or {}
+        calendar_events = project_deliverables.get('calendar_events', []) or []
+        gantt = project_deliverables.get('gantt_chart', {}) or {}
+        rows_tools = []
+        if local_project_info and not local_project_info.get('error'):
+            rows_tools.append(("Local Project Path", local_project_info.get('project_path', 'Unknown')))
+            rows_tools.append(("Files Created", len(local_project_info.get('files_created', []))))
         if timeline_info:
             start_date = timeline_info.get('project_start', 'TBD')
             end_date = timeline_info.get('project_summary', {}).get('project_end', 'TBD')
             duration = timeline_info.get('project_summary', {}).get('total_duration_days', 0)
-            milestones_count = timeline_info.get('project_summary', {}).get('total_milestones', 0)
-            tasks_count = timeline_info.get('project_summary', {}).get('total_tasks', 0)
-            
-            plan += f"""
-
-📅 PROJECT TIMELINE GENERATED:
-[START] {start_date}
-[END] {end_date}
-[DURATION] {duration} days
-[MILESTONES] {milestones_count} milestones
-[TASKS] {tasks_count} tasks scheduled
-"""
-        
-        # Add Team Assignments
-        assignments = project_deliverables.get("task_assignments", {})
+            rows_tools.extend([
+                ("Timeline Start", start_date),
+                ("Timeline End", end_date),
+                ("Timeline Days", duration),
+            ])
         if assignments:
-            plan += "\n👥 TEAM ASSIGNMENTS OPTIMIZED:\n"
-            for assignment in assignments.get("task_assignments", []):
-                task_title = assignment.get('task_title', 'Unknown Task')
-                assigned_to = assignment.get('assigned_to', 'Unassigned')
-                estimated_hours = assignment.get('estimated_hours', 0)
-                plan += f"[TASK] {task_title} → {assigned_to} ({estimated_hours}h)\n"
-        
-        # Add Calendar Integration
-        calendar_events = project_deliverables.get("calendar_events", [])
+            rows_tools.append(("Assignments", len(assignments.get('task_assignments', []))))
         if calendar_events:
-            events_count = len(calendar_events)
-            plan += f"""
+            rows_tools.append(("Calendar Events", len(calendar_events)))
+        if gantt:
+            rows_tools.append(("Gantt Data", "Generated"))
+        tools_table = self._kv_table("[TOOLS / DELIVERABLES]", rows_tools)
 
-📆 CALENDAR EVENTS GENERATED:
-[EVENTS] {events_count} calendar events ready for import
-[TYPES] Milestones, task deadlines, and team meetings
-"""
-        
-        # Extract Trello information from task response
-        task_text = task_response.response.parts[0].root.text
-        trello_info = self.extract_trello_info_from_response(task_text)
-        
-        # Add Trello integration results if available
-        if trello_info:
-            plan += f"""
+        # Build final plan (tables only, no emojis)
+        header = f"A2A PROTOCOL RESULT - DIVIDED BY AGENT\n[TIMESTAMP] {timestamp}\n"
+        plan = "\n\n".join([header, sup_table, ms_table, task_table, res_table, tools_table, "READY FOR EXECUTION"]).strip()
 
-🔗 TRELLO INTEGRATION STATUS:
-[BOARD] {trello_info.get('board_name', 'N/A')}
-[URL] {trello_info.get('board_url', 'N/A')}
-[CARDS] {trello_info.get('cards_created', 0)} task cards created
-[STATUS] ✅ Ready for team collaboration
-"""
-        else:
-            plan += """
-
-🔗 TRELLO INTEGRATION STATUS:
-[STATUS] ❌ Not configured or failed
-[HELP] Set API_KEY_TRELLO and API_TOKEN_TRELLO environment variables
-"""
-        
-        # Original agent responses
-        milestone_text = milestone_response.response.parts[0].root.text
-        resource_text = resource_response.response.parts[0].root.text
-        
-        plan += f"""
-
-═══════════════════════════════════════════════════════════════
-📋 DETAILED MILESTONE PLAN:
-═══════════════════════════════════════════════════════════════
-{milestone_text}
-
-═══════════════════════════════════════════════════════════════
-📝 TASK BREAKDOWN:
-═══════════════════════════════════════════════════════════════
-{task_text}
-
-═══════════════════════════════════════════════════════════════
-👥 RESOURCE ALLOCATION:
-═══════════════════════════════════════════════════════════════
-{resource_text}
-
-🎯 READY FOR EXECUTION!
-The project has been fully planned and integrated with local project management files.
-Check the local project directory for files including tasks, timelines, and team assignments.
-        """
-        
         return plan.strip()
 
     def extract_trello_info_from_response(self, task_response_text: str) -> Dict[str, Any]:
@@ -594,13 +612,10 @@ Please provide:
 Format your response as a structured analysis suitable for project planning.
                 """
                 
-                result = await ai_service.analyze_text(analysis_prompt)
+                result = await ai_service.analyze_project_requirements(analysis_prompt)
                 
                 print(f"[SUPERVISOR] AI analysis completed for: {project_name}")
                 return f"""
-[AI-POWERED] MISSION ANALYSIS:
-════════════════════════════════════════════════════════════════
-
 [PROJECT] {project_name}
 [MISSION] {mission}
 
@@ -683,42 +698,39 @@ Format your response as a structured analysis suitable for project planning.
         
         if not tech_stack:
             tech_stack = ['Modern Web Technologies', 'Cloud Infrastructure']
-        
-        return f"""
-[INTELLIGENT] MISSION ANALYSIS:
-════════════════════════════════════════════════════════════════
 
+        return f"""
 [PROJECT] {project_name}
 [MISSION] {mission}
 
 [ANALYSIS]
 1. COMPLEXITY ASSESSMENT: {complexity}
-   - Based on feature analysis and technical requirements
-   - Features identified: {len(features)} key components
+    - Based on feature analysis and technical requirements
+    - Features identified: {len(features)} key components
 
 2. ESTIMATED TIMELINE: {duration}
-   - Development phases: Planning → Design → Development → Testing → Deployment
-   - Team size recommended: {team_size} members
+    - Development phases: Planning → Design → Development → Testing → Deployment
+    - Team size recommended: {team_size} members
 
 3. KEY TECHNICAL REQUIREMENTS:
-   {chr(10).join(f"   - {feature}" for feature in features[:6])}
+    {chr(10).join(f"   - {feature}" for feature in features[:6])}
 
 4. PRIMARY DELIVERABLES:
-   - Functional {project_name.lower()}
-   - Technical documentation
-   - Deployment package
-   - User training materials
+    - Functional {project_name.lower()}
+    - Technical documentation
+    - Deployment package
+    - User training materials
 
 5. RISK FACTORS:
-   - Technical complexity: {complexity}
-   - Integration challenges: {'High' if 'integration' in mission_lower else 'Medium'}
-   - Timeline pressure: {'High' if feature_count > 8 else 'Medium'}
+    - Technical complexity: {complexity}
+    - Integration challenges: {'High' if 'integration' in mission_lower else 'Medium'}
+    - Timeline pressure: {'High' if feature_count > 8 else 'Medium'}
 
 6. SUCCESS METRICS:
-   - Feature completion rate
-   - Performance benchmarks
-   - User acceptance criteria
-   - Quality assurance metrics
+    - Feature completion rate
+    - Performance benchmarks
+    - User acceptance criteria
+    - Quality assurance metrics
 
 [TECHNICAL STACK]
 {chr(10).join(f"   - {tech}" for tech in tech_stack)}
@@ -728,7 +740,7 @@ Format your response as a structured analysis suitable for project planning.
 - Analysis Method: Intelligent Pattern Recognition
 - Confidence: High (Structured Analysis)
 - Features Detected: {len(features)}
-        """.strip()
+          """.strip()
 
     async def basic_mission_coordination(self, mission: str) -> str:
         """Fallback basic coordination without enhanced tools"""
