@@ -318,3 +318,4 @@ debug_*.py
 !*.example
 !*.template
 !*.sample
+a2a_projects

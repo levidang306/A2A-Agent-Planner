@@ -148,6 +148,71 @@ class TrelloIntegration:
             print(f"[TRELLO ERROR] {error_msg}")
             return None
 
+    def create_list(self, board_id: str, list_name: str) -> Optional[str]:
+        """
+        Create a new list on a specified board.
+        :param board_id: ID of the board to create the list on
+        :param list_name: Name of the list to create
+        :return: List ID if successful, None otherwise
+        """
+        logger.info(f"Creating list '{list_name}' on board {board_id}")
+        print(f"[TRELLO] Creating list '{list_name}' on board {board_id}")
+        
+        if not self.api_key or not self.api_token:
+            error_msg = "Trello API credentials not provided in TrelloIntegration constructor"
+            logger.error(error_msg)
+            print(f"[TRELLO ERROR] {error_msg}")
+            return None
+        
+        # Remove emojis from list name to prevent Unicode encoding errors
+        clean_list_name = ''.join(char for char in list_name if ord(char) < 128)
+        if clean_list_name != list_name:
+            logger.info(f"Cleaned list name from '{list_name}' to '{clean_list_name}' to prevent Unicode errors")
+            print(f"[TRELLO] Cleaned list name from '{list_name}' to '{clean_list_name}' to prevent Unicode errors")
+        
+        url = f"{BASE_URL}/lists"
+        data = {
+            "name": clean_list_name,
+            "idBoard": board_id,
+            "key": self.api_key,
+            "token": self.api_token
+        }
+        
+        try:
+            logger.info(f"Making API request to create list: {url}")
+            print(f"[TRELLO] Making API request to create list...")
+            
+            response = requests.post(url, data=data)
+            
+            logger.info(f"API response status: {response.status_code}")
+            print(f"[TRELLO] API response status: {response.status_code}")
+            
+            if response.status_code == 200:
+                list_data = response.json()
+                list_id = list_data.get("id")
+                
+                success_msg = f"List '{clean_list_name}' created successfully with ID: {list_id}"
+                logger.info(success_msg)
+                print(f"[TRELLO SUCCESS] {success_msg}")
+                
+                return list_id
+            else:
+                error_msg = f"Failed to create list: {response.status_code} - {response.text}"
+                logger.error(error_msg)
+                print(f"[TRELLO ERROR] {error_msg}")
+                return None
+                
+        except requests.exceptions.RequestException as e:
+            error_msg = f"Network error while creating list: {str(e)}"
+            logger.error(error_msg)
+            print(f"[TRELLO ERROR] {error_msg}")
+            return None
+        except Exception as e:
+            error_msg = f"Unexpected error while creating list: {str(e)}"
+            logger.error(error_msg)
+            print(f"[TRELLO ERROR] {error_msg}")
+            return None
+
     def get_lists_on_board(self, board_id: str) -> Optional[list]:
         """
         Retrieve all lists on a specified board.

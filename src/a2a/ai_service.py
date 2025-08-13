@@ -277,6 +277,33 @@ Ensure the response is a properly formatted JSON object that can be parsed direc
             content = result['content'][0]['text']
             return json.loads(content)
     
+    async def analyze_text(self, prompt: str) -> str:
+        """General purpose text analysis using AI"""
+        if not self.enable_ai:
+            return ""
+        
+        try:
+            if self.provider == 'google' and self.google_key:
+                async with httpx.AsyncClient() as client:
+                    response = await client.post(
+                        f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={self.google_key}",
+                        json={
+                            "contents": [{
+                                "parts": [{"text": prompt}]
+                            }]
+                        },
+                        timeout=60.0
+                    )
+                    response.raise_for_status()
+                    result = response.json()
+                    return result['candidates'][0]['content']['parts'][0]['text']
+            else:
+                logger.warning(f"AI provider {self.provider} not configured for text analysis")
+                return ""
+        except Exception as e:
+            logger.error(f"AI text analysis failed: {e}")
+            return ""
+
     async def _call_ai_provider(self, prompt: str) -> Dict[str, Any]:
         """Call the configured AI provider"""
         if self.provider == 'google' and self.google_key:

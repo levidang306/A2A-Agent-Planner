@@ -15,10 +15,12 @@ class A2AClient:
         self.httpx_client = httpx_client
         self.agent_card = agent_card
         self.base_url = agent_card.endpoints.get("base_url", "http://localhost:8000")
+        logger.info(f"A2AClient initialized with base_url: {self.base_url} from agent: {agent_card.name}")
         
     async def send_message(self, request: SendMessageRequest) -> MessageResponse:
         """Send a message to this agent"""
         url = f"{self.base_url}/api/send_message"
+        logger.info(f"Sending message to {url}")
         
         try:
             response = await self.httpx_client.post(
@@ -26,16 +28,17 @@ class A2AClient:
                 json=request.model_dump(),
                 timeout=30.0
             )
+            logger.info(f"Received response with status: {response.status_code}")
             response.raise_for_status()
             
             data = response.json()
             return MessageResponse(**data)
             
         except httpx.RequestError as e:
-            logger.error("Request failed", error=str(e), url=url)
+            logger.error("Request failed", error=str(e), url=url, error_type=type(e).__name__)
             raise
         except httpx.HTTPStatusError as e:
-            logger.error("HTTP error", status_code=e.response.status_code, url=url)
+            logger.error("HTTP error", status_code=e.response.status_code, url=url, response_text=e.response.text)
             raise
     
     async def get_agent_info(self) -> AgentCard:
@@ -60,8 +63,8 @@ class A2ACardResolver:
             return AgentCard(**data)
             
         except httpx.RequestError as e:
-            logger.error("Failed to resolve agent card", error=str(e), url=url)
+            logger.error("Failed to resolve agent card", error=str(e), url=url, error_type=type(e).__name__)
             raise
         except httpx.HTTPStatusError as e:
-            logger.error("HTTP error resolving agent card", status_code=e.response.status_code, url=url)
+            logger.error("HTTP error resolving agent card", status_code=e.response.status_code, url=url, response_text=e.response.text)
             raise
