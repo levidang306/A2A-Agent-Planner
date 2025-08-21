@@ -14,7 +14,7 @@ class A2AClient:
     def __init__(self, httpx_client: httpx.AsyncClient, agent_card: AgentCard):
         self.httpx_client = httpx_client
         self.agent_card = agent_card
-        self.base_url = agent_card.endpoints.get("base_url", "http://localhost:8000")
+        self.base_url = agent_card.endpoints.get("base_url", "http://localhost:9001")
         logger.info(f"A2AClient initialized with base_url: {self.base_url} from agent: {agent_card.name}")
         
     async def send_message(self, request: SendMessageRequest) -> MessageResponse:
@@ -26,7 +26,7 @@ class A2AClient:
             response = await self.httpx_client.post(
                 url,
                 json=request.model_dump(),
-                timeout=30.0
+                timeout=300.0  # Increased timeout to 5 minutes for complex operations
             )
             logger.info(f"Received response with status: {response.status_code}")
             response.raise_for_status()

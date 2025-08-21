@@ -25,6 +25,9 @@ from src.a2a.client import A2ACardResolver, A2AClient
 
 app = FastAPI(title="A2A Testing UI", description="Web interface for testing A2A Task Management System")
 
+# Mount static files for a2a_projects folder
+app.mount("/projects", StaticFiles(directory="a2a_projects"), name="projects")
+
 # Demo scenarios
 DEMO_SCENARIOS = {
     "simple_website": {
@@ -426,6 +429,11 @@ async def home(request: Request):
             <div class="header">
                 <h1>🤖 A2A Task Management System</h1>
                 <p>Interactive Demo Testing Interface</p>
+                <div style="margin-top: 15px;">
+                    <a href="/projects-browser" style="color: #fff; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 20px; text-decoration: none; font-weight: 500; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                        🗂️ Browse Generated Projects
+                    </a>
+                </div>
             </div>
             
             <div class="status-bar">
@@ -795,7 +803,7 @@ async def test_agents():
     
     result = "[AGENT] CONNECTIVITY TEST\\n\\n"
     
-    async with httpx.AsyncClient() as httpx_client:
+    async with httpx.AsyncClient(timeout=httpx.Timeout(120.0)) as httpx_client:
         for agent_name, agent_url in agents:
             try:
                 resolver = A2ACardResolver(httpx_client, agent_url)
@@ -806,6 +814,294 @@ async def test_agents():
                 result += f"[ERROR] {agent_name} Agent - Connection failed: {str(e)}\\n\\n"
     
     return {"result": result}
+
+@app.get("/projects")
+async def list_projects():
+    """List all available project folders in a2a_projects directory"""
+    try:
+        projects_dir = "a2a_projects"
+        if not os.path.exists(projects_dir):
+            return {"projects": [], "message": "No projects directory found"}
+        
+        projects = []
+        for item in os.listdir(projects_dir):
+            item_path = os.path.join(projects_dir, item)
+            if os.path.isdir(item_path) and item != "__pycache__":
+                # Check if it has project files
+                project_info = {
+                    "name": item,
+                    "path": f"/projects/{item}",
+                    "files": []
+                }
+                
+                # List files in the project directory
+                try:
+                    for file in os.listdir(item_path):
+                        if file.endswith(('.html', '.md', '.json', '.csv')):
+                            project_info["files"].append({
+                                "name": file,
+                                "url": f"/projects/{item}/{file}",
+                                "type": file.split('.')[-1].upper()
+                            })
+                except PermissionError:
+                    continue
+                    
+                if project_info["files"]:  # Only include if it has viewable files
+                    projects.append(project_info)
+        
+        return {"projects": projects, "count": len(projects)}
+    except Exception as e:
+        return {"error": str(e), "projects": []}
+
+@app.get("/projects-browser", response_class=HTMLResponse)
+async def projects_browser():
+    """HTML page to browse generated projects"""
+    html_content = """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>A2A Generated Projects Browser</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+            
+            body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                padding: 20px;
+            }
+            
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+                background: white;
+                border-radius: 15px;
+                padding: 30px;
+                box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            }
+            
+            .header {
+                text-align: center;
+                margin-bottom: 30px;
+            }
+            
+            .header h1 {
+                color: #333;
+                font-size: 2.5em;
+                margin-bottom: 10px;
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+            }
+            
+            .header p {
+                color: #666;
+                font-size: 1.1em;
+            }
+            
+            .projects-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+                gap: 20px;
+                margin-top: 30px;
+            }
+            
+            .project-card {
+                border: 1px solid #e1e1e1;
+                border-radius: 10px;
+                padding: 20px;
+                background: #f9f9f9;
+                transition: transform 0.2s, box-shadow 0.2s;
+            }
+            
+            .project-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            }
+            
+            .project-name {
+                font-size: 1.3em;
+                font-weight: bold;
+                color: #333;
+                margin-bottom: 15px;
+                padding-bottom: 10px;
+                border-bottom: 2px solid #667eea;
+            }
+            
+            .project-files {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .file-link {
+                display: flex;
+                align-items: center;
+                padding: 8px 12px;
+                background: white;
+                border-radius: 5px;
+                text-decoration: none;
+                color: #333;
+                transition: background 0.2s;
+                border: 1px solid #e1e1e1;
+            }
+            
+            .file-link:hover {
+                background: #f0f0f0;
+                border-color: #667eea;
+            }
+            
+            .file-type {
+                background: #667eea;
+                color: white;
+                padding: 2px 8px;
+                border-radius: 3px;
+                font-size: 0.8em;
+                margin-right: 10px;
+                min-width: 45px;
+                text-align: center;
+            }
+            
+            .file-type.html { background: #e74c3c; }
+            .file-type.md { background: #3498db; }
+            .file-type.json { background: #f39c12; }
+            .file-type.csv { background: #27ae60; }
+            
+            .loading {
+                text-align: center;
+                padding: 40px;
+                color: #666;
+            }
+            
+            .no-projects {
+                text-align: center;
+                padding: 40px;
+                color: #666;
+                background: #f9f9f9;
+                border-radius: 10px;
+                margin-top: 30px;
+            }
+            
+            .refresh-btn {
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 1em;
+                margin-top: 20px;
+                transition: transform 0.2s;
+            }
+            
+            .refresh-btn:hover {
+                transform: scale(1.05);
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>🗂️ A2A Generated Projects</h1>
+                <p>Browse all projects generated by the A2A Task Management System</p>
+                <button class="refresh-btn" onclick="loadProjects()">🔄 Refresh Projects</button>
+            </div>
+            
+            <div id="loading" class="loading">
+                <h3>Loading projects...</h3>
+            </div>
+            
+            <div id="projects-container" class="projects-grid" style="display: none;">
+            </div>
+            
+            <div id="no-projects" class="no-projects" style="display: none;">
+                <h3>No projects found</h3>
+                <p>Run some demos first to generate project files!</p>
+                <p><a href="/" style="color: #667eea;">← Back to A2A Demo Interface</a></p>
+            </div>
+        </div>
+        
+        <script>
+            async function loadProjects() {
+                const loading = document.getElementById('loading');
+                const container = document.getElementById('projects-container');
+                const noProjects = document.getElementById('no-projects');
+                
+                loading.style.display = 'block';
+                container.style.display = 'none';
+                noProjects.style.display = 'none';
+                
+                try {
+                    const response = await fetch('/projects');
+                    const data = await response.json();
+                    
+                    loading.style.display = 'none';
+                    
+                    if (data.projects && data.projects.length > 0) {
+                        container.innerHTML = '';
+                        data.projects.forEach(project => {
+                            const projectCard = createProjectCard(project);
+                            container.appendChild(projectCard);
+                        });
+                        container.style.display = 'grid';
+                    } else {
+                        noProjects.style.display = 'block';
+                    }
+                } catch (error) {
+                    loading.style.display = 'none';
+                    noProjects.innerHTML = '<h3>Error loading projects</h3><p>' + error.message + '</p>';
+                    noProjects.style.display = 'block';
+                }
+            }
+            
+            function createProjectCard(project) {
+                const card = document.createElement('div');
+                card.className = 'project-card';
+                
+                const name = document.createElement('div');
+                name.className = 'project-name';
+                name.textContent = project.name;
+                
+                const files = document.createElement('div');
+                files.className = 'project-files';
+                
+                project.files.forEach(file => {
+                    const link = document.createElement('a');
+                    link.className = 'file-link';
+                    link.href = file.url;
+                    link.target = '_blank';
+                    
+                    const type = document.createElement('span');
+                    type.className = `file-type ${file.type.toLowerCase()}`;
+                    type.textContent = file.type;
+                    
+                    const fileName = document.createElement('span');
+                    fileName.textContent = file.name;
+                    
+                    link.appendChild(type);
+                    link.appendChild(fileName);
+                    files.appendChild(link);
+                });
+                
+                card.appendChild(name);
+                card.appendChild(files);
+                return card;
+            }
+            
+            // Load projects on page load
+            loadProjects();
+        </script>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content)
 
 async def check_all_agents_status(httpx_client, log_step, log_error):
     """Check status of all agents before proceeding"""
@@ -883,7 +1179,7 @@ async def execute_a2a_flow(mission: str) -> str:
         log_step("🎯 INIT", "Starting A2A Protocol Flow")
         log_step("📝 INPUT", f"Mission received: {mission[:100]}{'...' if len(mission) > 100 else ''}")
         
-        async with httpx.AsyncClient(timeout=30.0) as httpx_client:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(120.0)) as httpx_client:
             # Connect to Supervisor Agent
             log_step("🔗 CONNECT", "Connecting to Supervisor Agent (Port 9001)")
             

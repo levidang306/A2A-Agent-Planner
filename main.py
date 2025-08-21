@@ -35,7 +35,7 @@ async def test_a2a_system():
     - Email notification system
     """
     
-    async with httpx.AsyncClient() as httpx_client:
+    async with httpx.AsyncClient(timeout=httpx.Timeout(120.0)) as httpx_client:
         try:
             # Connect to Supervisor Agent
             print("[CONNECT] Connecting to Supervisor Agent...")
@@ -64,6 +64,8 @@ async def test_a2a_system():
             )
             
             print("\n[PROCESS] Processing mission through A2A agent network...")
+            print("[PROCESS] This may take 1-2 minutes as agents coordinate...")
+            print("[PROCESS] Supervisor → Milestone → Task → Resource agents working...")
             response = await supervisor_client.send_message(request)
             
             print("\n" + "="*80)
@@ -109,7 +111,7 @@ async def test_individual_agents():
     
     print("[TEST] Testing individual agent connections...\n")
     
-    async with httpx.AsyncClient() as httpx_client:
+    async with httpx.AsyncClient(timeout=httpx.Timeout(120.0)) as httpx_client:
         for agent_name, agent_url in agents:
             try:
                 resolver = A2ACardResolver(httpx_client, agent_url)

@@ -44,7 +44,7 @@ class MilestoneAgent(BaseAgent):
     async def process_message(self, request: SendMessageRequest) -> MessageResponse:
         """Process milestone planning request"""
         print("[MILESTONE] ======= PROCESSING MESSAGE =======")
-        
+        print("[MILESTONE] Received request for milestone planning", request)
         message = request.params.message
         content = message.parts[0].root.text
         

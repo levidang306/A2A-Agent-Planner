@@ -29,8 +29,8 @@ class BaseAgent(ABC):
         self.app = FastAPI(title=f"{name} Agent")
         self.clients: Dict[str, A2AClient] = {}
         
-        # Load configuration from environment
-        self.timeout = int(os.getenv('AGENT_TIMEOUT', '30'))
+        # Load configuration from environment  
+        self.timeout = int(os.getenv('AGENT_TIMEOUT', '300'))  # Increased default to 5 minutes
         self.debug = os.getenv('DEBUG', 'false').lower() == 'true'
         
         # Setup routes
@@ -65,12 +65,12 @@ class BaseAgent(ABC):
     async def get_client(self, agent_url: str) -> A2AClient:
         """Get or create A2A client for another agent"""
         if agent_url not in self.clients:
-            async with httpx.AsyncClient() as http_client:
+            async with httpx.AsyncClient(timeout=httpx.Timeout(30.0)) as http_client:
                 resolver = A2ACardResolver(http_client, agent_url)
                 agent_card = await resolver.get_agent_card()
                 
-                # Create persistent client
-                persistent_client = httpx.AsyncClient(timeout=30.0)
+                # Create persistent client with longer timeout for complex operations
+                persistent_client = httpx.AsyncClient(timeout=httpx.Timeout(300.0, read=300.0, write=300.0, connect=30.0))
                 self.clients[agent_url] = A2AClient(persistent_client, agent_card)
         
         return self.clients[agent_url]
